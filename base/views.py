@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, HttpResponseRedirect, HttpResponse
-from .models import Room, Topic
+from .models import Room, Topic, Message
 from .forms import RoomForm
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -84,7 +84,14 @@ def home(request):
 
 def room(request, pk):
     found_room = Room.objects.get(id=pk)
-    room_data = {'room': found_room}
+    room_messages = found_room.message_set.all().order_by('-created')
+
+    if request.method == 'POST':
+        message = Message.objects.create(
+            user=request.user, room=found_room, body=request.POST.get('body'))
+        return redirect('room', pk=found_room.id)
+
+    room_data = {'room': found_room, 'room_messages': room_messages}
     return render(request, 'base/room.html', room_data)
 
 
